@@ -40,8 +40,8 @@ Checklist funkcií projektu — čo je hotové a čo čaká. Bez dátumov (hist�
 
 ## Zverejnenie
 
-- [ ] verejný repozitár na GitHube
-- [ ] kontrola súborov a snímok na osobné údaje pred prvým commitom
+- [x] verejný repozitár na GitHube
+- [x] kontrola súborov na osobné údaje pred prvým commitom
 
 ## Galéria Herdru
 
