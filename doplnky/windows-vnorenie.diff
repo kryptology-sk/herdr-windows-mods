@@ -1,0 +1,24 @@
+--- a/main.js
++++ b/main.js
+@@ -68,6 +68,9 @@
+ sid=$(sed -n 's/.*"sessionId":"\\([^"]*\\)".*/\\1/p' "$s" | head -1); [ -n "$sid" ] || continue
+ grep -H . "$(dirname "$(dirname "$s")")"/projects/*/"$sid"/subagents/agent-*.meta.json 2>/dev/null
+ done; true`;
++// Doplnok pre Windows nad opravou #1212 — na Windows nie je `sh` v PATH, to isté cez PowerShell.
++// Posledný argument je pid agenta. Vypíše `agent-<id>.meta.json:json` ako META.
++const META_WIN = `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); & { param($p) Get-ChildItem -LiteralPath $HOME -Directory -Force -Filter '.claude*' -ErrorAction SilentlyContinue | ForEach-Object { $d = $_.FullName; $s = Join-Path $d ('sessions/' + $p + '.json'); if (Test-Path -LiteralPath $s) { $sid = (Get-Content -LiteralPath $s -Raw -Encoding UTF8 | ConvertFrom-Json).sessionId; if ($sid) { Get-ChildItem -Path (Join-Path $d ('projects/*/' + $sid + '/subagents/agent-*.meta.json')) -ErrorAction SilentlyContinue | ForEach-Object { $_.Name + ':' + (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json | ConvertTo-Json -Compress) } } } } } `;
+ // Claude Code's subagent ids; a background shell's record has a short id and no file.
+ const SUBAGENT = /^a[0-9a-f]{12,}$/;
+ const SORTS = [
+@@ -130,7 +133,10 @@
+   async loadMeta(address, { pid, ids }) {
+     const machine = address.includes("/") ? address.split("/")[0] : null;
+     let out = "";
+-    if (pid) {
++    const local = !machine && window()?.platform === "windows";
++    if (pid && local) {
++      try { out = (await exec("powershell", ["-NoProfile", "-Command", META_WIN + String(Number(pid))], { timeout: 8000 })).stdout ?? ""; } catch {}
++    } else if (pid) {
+       try { out = (await exec("sh", ["-c", META, "sh", String(pid)], { on: machine, timeout: 8000 })).stdout ?? ""; } catch {}
+     }
+     for (const line of out.split("\n")) {

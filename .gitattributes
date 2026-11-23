@@ -1,0 +1,5 @@
+* text=auto
+# Shell skripty bežia na Linuxe — CRLF z Windows by dal "bad interpreter".
+*.sh text eol=lf
+# Rozdiely sa aplikujú cez git apply, konce riadkov sa v nich nesmú meniť.
+*.diff -text

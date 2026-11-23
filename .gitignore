@@ -1,0 +1,29 @@
+# interná dokumentácia (viď globálne pravidlá)
+SPEC.md
+CURRENT.md
+
+# interné podklady
+zdroje/
+
+# tajomstvá
+.env
+.env.*
+!.env.example
+
+# lokálne povolenia Claude Code
+.claude/settings.local.json
+
+# súbory, ktoré si Herdr App dopisuje do priečinka modu sám
+gpui-kit.d.ts
+jsconfig.json
+
+# zabalené vydania
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.vscode/
+.idea/

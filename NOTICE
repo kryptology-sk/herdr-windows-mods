@@ -1,0 +1,17 @@
+Herdr Windows mods
+Copyright 2026 Kryptology s. r. o.
+
+This project contains files derived from Herdr App
+(https://github.com/herdrdev/herdr-app), licensed under the Apache License 2.0,
+and modified by Kryptology s. r. o. in 2026:
+
+- mods/agents-tree/
+- mods/panely/
+- layouts/vychytavky.json
+- layouts/pasova-vyroba.json
+
+mods/agents-tree/main.js and doplnky/pr1212-mainjs.diff contain part of the
+Herdr App pull request #1212 by dkremsa
+(https://github.com/herdrdev/herdr-app/pull/1212).
+
+The origin of the code and its licenses are described in ORIGIN.md.
