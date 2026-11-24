@@ -9,8 +9,8 @@ Herdr App is in the repository [herdrdev/herdr-app](https://github.com/herdrdev/
 | Item | Derived from | Changes in the package |
 |---|---|---|
 | `mods\agents-tree` | clone of the shipped `agents` mod from Herdr App 0.1.16 (`cloned_from` in `mod.json`) | Changes from the open pull request [#1212](https://github.com/herdrdev/herdr-app/pull/1212) “fix: the agents list shows what an agent runs in its own process” by `dkremsa`. Only the part for `defaults/mods/agents/main.js` is taken from it, and it is in `doplnky\pr1212-mainjs.diff`. In addition an own extension for Windows (the `META_WIN` constant and a branch in `loadMeta`), which is in `doplnky\windows-vnorenie.diff`. |
-| `mods\panely` | clone of the shipped `tabs` mod from Herdr App 0.1.16 (`cloned_from` in `mod.json`), the `win-*.svg` icons are taken from it unchanged | Buttons for the Limity and História panels, icon paths under the new mod name, the title `Panely` in `mod.json`. |
-| `layouts\vychytavky.json` | clone of the shipped `main` layout from Herdr App 0.1.16 | The Agents panel points to `agents-tree`, the bar to `panely`, and the blocks `limity` and `historia` were added to the `panel-body` stack. |
+| `mods\panely` | clone of the shipped `tabs` mod from Herdr App 0.1.16 (`cloned_from` in `mod.json`), the `win-*.svg` icons are taken from it unchanged | Buttons for the Limits and History panels with texts in English and Slovak, icon paths under the new mod name, the title `Panels` in `mod.json`. |
+| `doplnky\vychytavky.json` | clone of the shipped `main` layout from Herdr App 0.1.16 | The Agents panel points to `agents-tree`, the bar to `panely`, and the blocks `limity` and `historia` were added to the `panel-body` stack. |
 | `layouts\pasova-vyroba.json` | copy of `vychytavky.json` | A `pas` block was added above the terminals. |
 
 Small routines in `mods\historia` and `mods\pas` follow the shipped mods, as the code comments say (`location()` after the `files` mod, `ikona()` after `icon()` in the `agents` mod, the search field after the `picker` mod).
@@ -28,7 +28,7 @@ The comments in `main.js` and `art.js` name an adopted technique, not adopted co
 
 - `mods\limity`, `mods\historia`, `mods\pas` (except the techniques above), the Windows extension in `mods\agents-tree` and the panel additions in `mods\panely`.
 - `doplnky\statusline-limity.ps1`, `doplnky\statusline-limity-vlozka.ps1`, `doplnky\agy-statusline.mjs`.
-- `instalacia.ps1`, `README.md`, `README.sk.md`, this file and its Slovak version [POVOD.md](POVOD.md).
+- `instalacia.ps1`, `README.md`, `README.sk.md`, `RECIPE.md`, this file and its Slovak version [POVOD.md](POVOD.md).
 
 A large part of the own code was written by AI coding assistants following the instructions of Kryptology s. r. o.
 

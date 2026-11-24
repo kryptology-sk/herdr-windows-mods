@@ -36,7 +36,7 @@ Checklist funkcií projektu — čo je hotové a čo čaká. Bez dátumov (hist�
 - [x] README v angličtine, slovenské ako `README.sk.md`
 - [x] pôvod kódu po anglicky (`ORIGIN.md`) aj po slovensky (`POVOD.md`)
 - [x] poznámka o úprave na začiatku odvodených súborov `agents-tree` a `panely`
-- [ ] texty v paneloch po anglicky aj po slovensky
+- [x] texty v paneloch po anglicky aj po slovensky s prepínačom EN/SK
 
 ## Zverejnenie
 
@@ -45,7 +45,7 @@ Checklist funkcií projektu — čo je hotové a čo čaká. Bez dátumov (hist�
 
 ## Galéria Herdru
 
-- [ ] `RECIPE.md` pre rozloženie `pasova-vyroba`
-- [ ] `preview.png` s ukážkovými údajmi
-- [ ] priečinky podľa pravidiel galérie
+- [x] `RECIPE.md` pre rozloženie `pasova-vyroba`
+- [x] `preview.png` z ukážkového okna
+- [x] priečinky podľa pravidiel galérie (jedno rozloženie v `layouts`)
 - [ ] téma repozitára `herdr-layout`

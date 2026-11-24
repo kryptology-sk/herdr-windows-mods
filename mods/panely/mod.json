@@ -1,6 +1,6 @@
 {
   "place": "none",
-  "title": "Panely",
+  "title": "Panels",
   "cloned_from": {
     "name": "tabs",
     "version": "0.1.16"

@@ -10,7 +10,7 @@
 
 import { View, div } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { exec, readTextFile, home, theme, checking, agents } from "herdr";
+import { exec, readTextFile, home, theme, checking, agents, shared, setShared } from "herdr";
 
 const SUBORY_KAZDYCH_MS = 15000;
 const CODEX_KAZDYCH_MS = 60000;
@@ -24,8 +24,69 @@ const STARY_UDAJ_MIN = 60;
 const VYSTRAHA_PCT = 80;
 const KRITICKE_PCT = 95;
 
-const POPISY_CLAUDE = { five_hour: "5 hodín", seven_day: "týždeň" };
-const DNI = ["ne", "po", "ut", "st", "št", "pi", "so"];
+// Texty panela po anglicky a po slovensky, s rovnakými kľúčmi. Text s hodnotami je funkcia.
+const TEXTY = {
+  en: {
+    nadpis: "Limits",
+    nacitava: "loading…",
+    bezUdaja: "no data",
+    agyBezSuboru: "agy does not write usage locally",
+    vekNeznamy: "age unknown",
+    udajChvila: "updated just now",
+    udajMin: (n) => `updated ${n} min ago`,
+    udajHodin: (n) => `updated ${n} h ago`,
+    udajDni: (n) => `updated ${n} days ago`,
+    obnovaO: (cas) => `resets in ${cas}`,
+    obnovaDna: (den, cas) => `resets ${den} ${cas}`,
+    dni: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    kod: (kod, vystup) => `code ${kod} ${vystup}`,
+    usageZlyhala: (dovod) => `automatic refresh of Claude usage failed: ${dovod}`,
+    hodin5: "5 hours",
+    tyzden: "week",
+    den: "day",
+    mesiac: "month",
+    okno: "window",
+  },
+  sk: {
+    nadpis: "Limity",
+    nacitava: "načítava sa…",
+    bezUdaja: "bez údaja",
+    agyBezSuboru: "agy čerpanie lokálne nezapisuje",
+    vekNeznamy: "vek údaja neznámy",
+    udajChvila: "údaj spred chvíle",
+    udajMin: (n) => `údaj spred ${n} min`,
+    udajHodin: (n) => `údaj spred ${n} h`,
+    udajDni: (n) => `údaj spred ${n} dní`,
+    obnovaO: (cas) => `obnova o ${cas}`,
+    obnovaDna: (den, cas) => `obnova ${den} ${cas}`,
+    dni: ["ne", "po", "ut", "st", "št", "pi", "so"],
+    kod: (kod, vystup) => `kód ${kod} ${vystup}`,
+    usageZlyhala: (dovod) => `automatická obnova čerpania Claude zlyhala: ${dovod}`,
+    hodin5: "5 hodín",
+    tyzden: "týždeň",
+    den: "deň",
+    mesiac: "mesiac",
+    okno: "okno",
+  },
+};
+
+// Jazyk panelov je jedna zdieľaná hodnota pre všetky mody. Chýbajúca alebo iná hodnota je angličtina.
+const KLUC_JAZYKA = "windows-mods.lang";
+const jazyk = () => (shared(KLUC_JAZYKA) === "sk" ? "sk" : "en");
+
+// Text v aktuálnom jazyku, číta sa pri kreslení. Funkcii odovzdá hodnoty.
+function tx(kluc, ...hodnoty) {
+  const text = TEXTY[jazyk()][kluc];
+  return typeof text === "function" ? text(...hodnoty) : text;
+}
+
+// Prepne jazyk všetkých panelov. setShared prekreslí všetky mody.
+const prepniJazyk = () => setShared(KLUC_JAZYKA, jazyk() === "sk" ? "en" : "sk");
+
+// Popisy okien sa v dátach držia po slovensky, rovnako ako ich do agy.json píše skript
+// stavového riadku. Do jazyka panela ich prekladá popisOkna pri kreslení.
+const POPISY_CLAUDE = { five_hour: TEXTY.sk.hodin5, seven_day: TEXTY.sk.tyzden };
+const OBDOBIA = ["hodin5", "tyzden", "den", "mesiac", "okno"];
 
 // Jeden riadok PowerShellu (vzor META_WIN v agents-tree). Vezme 5 najnovších sedení Codexu
 // podľa času zmeny, z každého len posledných 20 riadkov, a prvý nájdený posledný záznam
@@ -110,7 +171,7 @@ const okno = (popis, pct, obnova) => ({ popis, pct, obnova: cislo(obnova) ? obno
 // Všeobecný tvar {"windows": [{label, used_percent, resets_at}]} — agy.json aj claude.json.
 function oknaZoZoznamu(windows) {
   if (!Array.isArray(windows)) return [];
-  return windows.filter((w) => cislo(w?.used_percent)).map((w) => okno(String(w.label ?? "okno"), w.used_percent, w.resets_at));
+  return windows.filter((w) => cislo(w?.used_percent)).map((w) => okno(String(w.label ?? TEXTY.sk.okno), w.used_percent, w.resets_at));
 }
 
 // claude.json: každý kľúč rate_limits s číselným used_percentage, k tomu prípadné windows.
@@ -127,9 +188,9 @@ function oknaClaude(data) {
 }
 
 function popisMinut(minuty) {
-  if (minuty === 300) return "5 hodín";
-  if (minuty === 10080) return "týždeň";
-  return cislo(minuty) ? `${minuty} min` : "okno";
+  if (minuty === 300) return TEXTY.sk.hodin5;
+  if (minuty === 10080) return TEXTY.sk.tyzden;
+  return cislo(minuty) ? `${minuty} min` : TEXTY.sk.okno;
 }
 
 // Codex: okná primary a secondary, popis podľa dĺžky okna. Uložené sedenia píšu polia
@@ -140,7 +201,7 @@ function oknaCodex(limity) {
     .filter((o) => cislo(o.pct));
 }
 
-const POPISY_AGY = { weekly: "týždeň", "5h": "5 h" };
+const POPISY_AGY = { weekly: TEXTY.sk.tyzden, "5h": "5 h" };
 
 // agy: výstup `agy -p /usage --output-format json`, skupiny modelov a v nich okná so zostatkom.
 // Berú sa len okná Gemini, rovnako ako v skripte stavového riadku (okná 3p-* sa vynechávajú),
@@ -151,7 +212,7 @@ function oknaAgyUsage(data) {
     const model = String(skupina?.name ?? "").replace(/\s*models$/i, "");
     for (const b of skupina?.buckets ?? []) {
       if (String(b?.id ?? "").startsWith("3p") || !cislo(b?.remaining_fraction)) continue;
-      const popis = `${model} ${POPISY_AGY[b.window] ?? b.window ?? "okno"}`.trim();
+      const popis = `${model} ${POPISY_AGY[b.window] ?? b.window ?? TEXTY.sk.okno}`.trim();
       okna.push(okno(popis, (1 - b.remaining_fraction) * 100, Date.parse(b.reset_time) / 1000));
     }
   }
@@ -227,21 +288,42 @@ function textObnovy(obnova) {
     const casti = [];
     if (h) casti.push(`${h} h`);
     if (m || !h) casti.push(`${m} min`);
-    return `obnova o ${casti.join(" ")}`;
+    return tx("obnovaO", casti.join(" "));
   }
   const d = new Date(obnova * 1000);
-  return `obnova ${DNI[d.getDay()]} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return tx("obnovaDna", tx("dni")[d.getDay()], `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`);
 }
 
 // „údaj spred 3 min", nad hodinu „údaj spred 2 h" tlmenou farbou (stary).
 function vekUdaja(updated) {
-  if (!cislo(updated)) return { text: "vek údaja neznámy", stary: true };
+  if (!cislo(updated)) return { text: tx("vekNeznamy"), stary: true };
   const min = Math.floor(Math.max(0, teraz() - updated) / 60);
-  if (min < 1) return { text: "údaj spred chvíle", stary: false };
-  if (min <= STARY_UDAJ_MIN) return { text: `údaj spred ${min} min`, stary: false };
+  if (min < 1) return { text: tx("udajChvila"), stary: false };
+  if (min <= STARY_UDAJ_MIN) return { text: tx("udajMin", min), stary: false };
   const h = Math.floor(min / 60);
-  const kedy = h < 48 ? `${h} h` : `${Math.floor(h / 24)} dní`;
-  return { text: `údaj spred ${kedy}`, stary: true };
+  const text = h < 48 ? tx("udajHodin", h) : tx("udajDni", Math.floor(h / 24));
+  return { text, stary: true };
+}
+
+// Popis okna v jazyku panela. Prekladá sa celý popis alebo slovo obdobia na jeho konci
+// („Gemini týždeň" → „Gemini week"), ostatné (názvy modelov, „300 min") ostáva.
+function popisOkna(popis) {
+  for (const kluc of OBDOBIA) {
+    const sk = TEXTY.sk[kluc];
+    if (popis === sk || popis.endsWith(` ${sk}`)) return popis.slice(0, popis.length - sk.length) + tx(kluc);
+  }
+  return popis;
+}
+
+// Dôvod zlyhania obnovy čerpania Claude: kód a chybový výstup programu, alebo správa výnimky.
+const dovodChyby = (chyba) => (chyba.kod === null ? chyba.vystup : tx("kod", chyba.kod, chyba.vystup));
+
+// Prepínač jazyka panelov v hlavičke: kód aktuálneho jazyka, klik prepne na druhý.
+function tlacidloJazyka(t) {
+  return div().id("limity-jazyk").flex_none().h(20).px(6).flex().items_center().rounded(5).text_size(10).cursor_pointer()
+    .border_1().border_color(t.input).text_color(t.muted).hover((s) => s.bg(t.hover))
+    .on_click(() => prepniJazyk())
+    .child(jazyk().toUpperCase());
 }
 
 // Bežná farba témy, výstražná (blocked, ako varovania v dodávaných modoch), kritická (ansi1, červená).
@@ -259,7 +341,7 @@ function riadokOkna(o, t, bezObnovy = false) {
   const obnova = bezObnovy ? null : textObnovy(o.obnova);
   return v_flex().gap(2)
     .child(h_flex().gap(6).items_center()
-      .child(div().w(72).flex_none().truncate().text_color(t.muted).child(o.popis))
+      .child(div().w(72).flex_none().truncate().text_color(t.muted).child(popisOkna(o.popis)))
       .child(div().flex_1().min_w(0).max_w(64).h(5).rounded(3).overflow_hidden().bg(t.border)
         .child(div().h_full().w(`${pct}%`).rounded(3).bg(farbaPruhu(pct, t))))
       .child(div().flex_none().min_w(32).text_right().child(`${Math.round(o.pct)} %`)))
@@ -271,9 +353,9 @@ function sekcia(nazov, zdroj, t, poznamkaBezSuboru = null) {
   const hlavicka = h_flex().gap(6).items_center()
     .child(div().font_semibold().child(nazov))
     .when(Boolean(zdroj?.plan), (el) => el.child(maly(zdroj.plan, t.dim)));
-  if (!zdroj) return v_flex().gap(2).child(hlavicka).child(maly("načítava sa…", t.dim));
+  if (!zdroj) return v_flex().gap(2).child(hlavicka).child(maly(tx("nacitava"), t.dim));
   if (!zdroj.okna.length) {
-    return v_flex().gap(2).child(hlavicka).child(div().text_color(t.muted).child("bez údaja"))
+    return v_flex().gap(2).child(hlavicka).child(div().text_color(t.muted).child(tx("bezUdaja")))
       .when(Boolean(poznamkaBezSuboru) && zdroj.chyba === "subor", (el) => el.child(maly(poznamkaBezSuboru, t.dim)));
   }
   const vek = vekUdaja(zdroj.updated);
@@ -296,7 +378,7 @@ function spojClaude(hlavny, modely) {
   const extra = odlozene.filter((o) => o.popis !== "_all");
   const maHlavny = Boolean(hlavny?.okna.length);
   const odlozenyJeNovsi = !maHlavny || !cislo(hlavny.updated) || (cislo(modely?.updated) && modely.updated >= hlavny.updated);
-  if (tyzden && odlozenyJeNovsi) return { okna: [{ ...tyzden, popis: "týždeň" }, ...extra], updated: modely.updated };
+  if (tyzden && odlozenyJeNovsi) return { okna: [{ ...tyzden, popis: TEXTY.sk.tyzden }, ...extra], updated: modely.updated };
   if (!maHlavny) return extra.length ? { okna: extra, updated: modely.updated } : hlavny;
   if (!extra.length) return hlavny;
   const casy = [hlavny.updated, modely.updated].filter(cislo);
@@ -339,10 +421,11 @@ export default class Limity extends View {
     cx.spawn(async (cx) => {
       try {
         const r = await exec("claude", ["-p", "/usage", "--no-session-persistence", "--strict-mcp-config"], { cwd: home(), timeout: 60000 });
-        this.usageChyba = r.code === 0 ? null : `kód ${r.code} ${String(r.stderr ?? "").trim().slice(0, 160)}`;
+        // Dôvod sa skladá do textu až pri kreslení, aby sa riadil jazykom panela (dovodChyby).
+        this.usageChyba = r.code === 0 ? null : { kod: r.code, vystup: String(r.stderr ?? "").trim().slice(0, 160) };
         this.claudeModely = await citajClaudeModely();
       } catch (e) {
-        this.usageChyba = String(e?.message ?? e).slice(0, 160);
+        this.usageChyba = { kod: null, vystup: String(e?.message ?? e).slice(0, 160) };
       }
       finally { this.usageBezi = false; cx.notify(); }
     });
@@ -390,11 +473,12 @@ export default class Limity extends View {
     const t = theme();
     return v_flex().id("limity").size_full().min_h(0).rounded(10).overflow_hidden().bg(t.background).border_1().border_color(t.border).text_color(t.foreground).text_size(11)
       .child(h_flex().h(32).flex_none().px(10).gap(8).items_center().border_b(1).border_color(t.border)
-        .child(div().font_semibold().child("Limity")))
+        .child(div().flex_1().font_semibold().child(tx("nadpis")))
+        .child(tlacidloJazyka(t)))
       .child(v_flex().id("limity-obsah").flex_1().min_h(0).overflow_y_scrollbar().p(10).gap(14)
         .child(sekcia("Claude", spojClaude(this.claude, this.claudeModely), t))
-        .when(Boolean(this.usageChyba), (el) => el.child(maly(`automatická obnova čerpania Claude zlyhala: ${this.usageChyba}`, t.dim)))
+        .when(Boolean(this.usageChyba), (el) => el.child(maly(tx("usageZlyhala", dovodChyby(this.usageChyba)), t.dim)))
         .child(sekcia("Codex", novsi(this.codex, this.codexServer), t))
-        .child(sekcia("agy", novsi(this.agy, this.agyUsage), t, "agy čerpanie lokálne nezapisuje")));
+        .child(sekcia("agy", novsi(this.agy, this.agyUsage), t, tx("agyBezSuboru"))));
   }
 }

@@ -7,7 +7,7 @@ and modified by Kryptology s. r. o. in 2026:
 
 - mods/agents-tree/
 - mods/panely/
-- layouts/vychytavky.json
+- doplnky/vychytavky.json
 - layouts/pasova-vyroba.json
 
 mods/agents-tree/main.js and doplnky/pr1212-mainjs.diff contain part of the

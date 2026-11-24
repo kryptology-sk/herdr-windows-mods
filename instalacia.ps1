@@ -39,6 +39,8 @@ $ErrorActionPreference = 'Stop'
 $balik = $PSScriptRoot
 $mody = @('agents-tree', 'limity', 'historia', 'pas', 'panely')
 $rozlozenia = @('vychytavky', 'pasova-vyroba')
+# Priečinok rozloženia v balíčku. Galéria Herdru čaká v layouts\ jedno rozloženie, vychytavky je preto v doplnky\.
+$rozlozeniaVBaliku = @{ 'vychytavky' = 'doplnky'; 'pasova-vyroba' = 'layouts' }
 $modsCiel = Join-Path $HerdrHome 'mods'
 $layoutsCiel = Join-Path $HerdrHome 'layouts'
 
@@ -71,7 +73,7 @@ function Copy-HerdrMod([string]$meno) {
 function Copy-HerdrLayout([string]$meno) {
     $ciel = Join-Path $layoutsCiel "$meno.json"
     if (Test-Path -LiteralPath $ciel) { return $false }
-    Copy-Item -LiteralPath (Join-Path $balik "layouts\$meno.json") -Destination $ciel
+    Copy-Item -LiteralPath (Join-Path $balik "$($rozlozeniaVBaliku[$meno])\$meno.json") -Destination $ciel
     return $true
 }
 
@@ -86,7 +88,7 @@ function Test-ZmenenyMod([string]$meno) {
 # Či sa nainštalované rozloženie líši od verzie v balíčku.
 function Test-ZmeneneRozlozenie([string]$meno) {
     $nainstalovane = Join-Path $layoutsCiel "$meno.json"
-    $vBaliku = Join-Path $balik "layouts\$meno.json"
+    $vBaliku = Join-Path $balik "$($rozlozeniaVBaliku[$meno])\$meno.json"
     return (Get-FileHash -LiteralPath $nainstalovane).Hash -ne (Get-FileHash -LiteralPath $vBaliku).Hash
 }
 
@@ -133,7 +135,7 @@ function Invoke-Odinstalovanie {
     }
     foreach ($c in $plan.Zmazat) { Remove-Item -LiteralPath $c -Recurse -Force -Confirm:$false }
     Write-Host ''
-    Write-Host "Hotovo, zmazaných $($plan.Zmazat.Count) položiek. Stavový riadok Claude Code a agy si vráť ručne podľa README.md."
+    Write-Host "Hotovo, zmazaných $($plan.Zmazat.Count) položiek. Stavový riadok Claude Code a agy si vráť ručne podľa README.sk.md."
 }
 
 function Invoke-Instalacia {
@@ -161,8 +163,8 @@ function Invoke-Instalacia {
     Write-Host ''
     Write-Host 'Ďalšie kroky:'
     Write-Host '  1. V Herdri stláčaj Ctrl+Shift+L, kým sa neukáže rozloženie vychytavky (alebo pasova-vyroba).'
-    Write-Host '  2. Voliteľne zapoj stavový riadok Claude Code pre panel Limity — README.md, časť Limity.'
-    Write-Host '  3. Voliteľne zapoj stavový riadok agy — README.md, časť Limity.'
+    Write-Host '  2. Voliteľne zapoj stavový riadok Claude Code pre panel Limity — README.sk.md, časť Limity.'
+    Write-Host '  3. Voliteľne zapoj stavový riadok agy — README.sk.md, časť Limity.'
 }
 
 if ($Odinstaluj) { Invoke-Odinstalovanie } else { Invoke-Instalacia }

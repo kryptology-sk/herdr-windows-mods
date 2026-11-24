@@ -11,7 +11,7 @@
 // licencia MIT). Zber subagentov a pracovníkov podľa records() v mode agents-tree.
 
 import { View, div } from "gpui-kit";
-import { agents, terminals, spaces, focused, run, theme, props, checking } from "herdr";
+import { agents, terminals, spaces, focused, run, theme, props, checking, shared } from "herdr";
 import { ROBOT_W, ROBOT_H, KRABICA_W, robot, rozmerRobota, vykricnik, krabica, pas } from "./art.js";
 
 // Rozvrh scény v pixeloch karty (od jej horného ľavého rohu).
@@ -33,19 +33,85 @@ const ROZPOCET_PRVKOV = 250;
 const PRVKY = { zaklad: 32, hlavny: 18, pracovnik: 14, maly: 10, malyBezIkony: 8, plus: 1 };
 
 const MIERKA = { pracovnik: 0.8, subagent: 0.6, prikaz: 0.6 };
+
+// Texty po anglicky a po slovensky, s rovnakými kľúčmi. Text s hodnotami je funkcia.
+// Kľúče demo* sú mená a popisy v ukážkovej zostave.
+const TEXTY = {
+  en: {
+    zonaDepo: "Depot",
+    zonaPas: "Belt",
+    zonaVystup: "Output",
+    necinny: "idle",
+    pracuje: "working",
+    caka: "waiting for you",
+    hotovo: "done",
+    neznamy: "unknown",
+    agent1: "1 agent",
+    agenti: (n) => `${n} agents`,
+    agentov: (n) => `${n} agents`,
+    ziadniAgenti: "no agents",
+    demoDokumentacia: "docs",
+    demoTesty: "tests",
+    demoAnalyza: "analysis",
+    demoReview: "codex exec — diff review",
+    demoTestyHlada: "Searches the tests",
+    demoMigracie: "Checks migrations",
+    demoKluce: "Verifies API keys",
+    demoInventar: "File inventory",
+    demoOdkazy: "Dead links",
+    demoSiroty: "Orphans",
+  },
+  sk: {
+    zonaDepo: "Depo",
+    zonaPas: "Pás",
+    zonaVystup: "Výstup",
+    necinny: "nečinný",
+    pracuje: "pracuje",
+    caka: "čaká na teba",
+    hotovo: "hotovo",
+    neznamy: "neznámy",
+    agent1: "1 agent",
+    agenti: (n) => `${n} agenti`,
+    agentov: (n) => `${n} agentov`,
+    ziadniAgenti: "žiadni agenti",
+    demoDokumentacia: "dokumentacia",
+    demoTesty: "testy",
+    demoAnalyza: "analyza",
+    demoReview: "codex exec — review diffu",
+    demoTestyHlada: "Prehľadá testy",
+    demoMigracie: "Skontroluje migrácie",
+    demoKluce: "Overí API kľúče",
+    demoInventar: "Inventár súborov",
+    demoOdkazy: "Mŕtve odkazy",
+    demoSiroty: "Siroty",
+  },
+};
+
+// Jazyk panelov je jedna zdieľaná hodnota pre všetky mody (prepínajú ho panely Limity a História).
+// Chýbajúca alebo iná hodnota je angličtina.
+const KLUC_JAZYKA = "windows-mods.lang";
+const jazyk = () => (shared(KLUC_JAZYKA) === "sk" ? "sk" : "en");
+
+// Text v aktuálnom jazyku, číta sa pri kreslení. Funkcii odovzdá hodnoty.
+function tx(kluc, ...hodnoty) {
+  const text = TEXTY[jazyk()][kluc];
+  return typeof text === "function" ? text(...hodnoty) : text;
+}
+
+// Zóny a stavy nesú kľúč textu, nie text.
 const ZONY = [
-  { id: "depo", nazov: "Depo" },
-  { id: "pas", nazov: "Pás" },
-  { id: "vystup", nazov: "Výstup" },
+  { id: "depo", nazov: "zonaDepo" },
+  { id: "pas", nazov: "zonaPas" },
+  { id: "vystup", nazov: "zonaVystup" },
 ];
 const ZONA_STAVU = { idle: "depo", working: "pas", blocked: "pas", done: "vystup" };
-const STAV_TEXT = { idle: "nečinný", working: "pracuje", blocked: "čaká na teba", done: "hotovo" };
+const STAV_TEXT = { idle: "necinny", working: "pracuje", blocked: "caka", done: "hotovo" };
 
 // Subagent Claude Code má takéto id (ako SUBAGENT v agents-tree), príkaz na pozadí kratšie.
 const SUBAGENT = /^a[0-9a-f]{12,}$/;
 
 const obmedz = (x, od, po) => Math.max(od, Math.min(po, x));
-const stavText = (s) => STAV_TEXT[s] ?? s ?? "neznámy";
+const stavText = (s) => (STAV_TEXT[s] ? tx(STAV_TEXT[s]) : s ?? tx("neznamy"));
 
 // ---- živé dáta ---------------------------------------------------------------
 
@@ -130,18 +196,18 @@ function ukazkovaZostava() {
   return [
     g("u1", "web", "idle", PROGRAMY.claude),
     g("u2", "api", "working", PROGRAMY.claude, [
-      { id: "u2-hc", druh: "pracovnik", stav: "working", program: PROGRAMY.codex, popis: "codex exec — review diffu" },
-      subagent("u2#a1b2c3d4e5f6a7b8", "working", "Prehľadá testy"),
-      subagent("u2#a2b3c4d5e6f7a8b9", "working", "Skontroluje migrácie"),
-      subagent("u2#a3b4c5d6e7f8a9b0", "blocked", "Overí API kľúče"),
+      { id: "u2-hc", druh: "pracovnik", stav: "working", program: PROGRAMY.codex, popis: tx("demoReview") },
+      subagent("u2#a1b2c3d4e5f6a7b8", "working", tx("demoTestyHlada")),
+      subagent("u2#a2b3c4d5e6f7a8b9", "working", tx("demoMigracie")),
+      subagent("u2#a3b4c5d6e7f8a9b0", "blocked", tx("demoKluce")),
       prikaz("u2#b1x", "npm run build"),
     ]),
-    g("u3", "dokumentacia", "working", PROGRAMY.codex),
-    g("u4", "testy", "blocked", PROGRAMY.agy),
-    g("u5", "analyza", "working", PROGRAMY.claude, [
-      subagent("u5#a4b5c6d7e8f9a0b1", "working", "Inventár súborov"),
-      subagent("u5#a5b6c7d8e9f0a1b2", "working", "Mŕtve odkazy"),
-      subagent("u5#a6b7c8d9e0f1a2b3", "working", "Siroty"),
+    g("u3", tx("demoDokumentacia"), "working", PROGRAMY.codex),
+    g("u4", tx("demoTesty"), "blocked", PROGRAMY.agy),
+    g("u5", tx("demoAnalyza"), "working", PROGRAMY.claude, [
+      subagent("u5#a4b5c6d7e8f9a0b1", "working", tx("demoInventar")),
+      subagent("u5#a5b6c7d8e9f0a1b2", "working", tx("demoOdkazy")),
+      subagent("u5#a6b7c8d9e0f1a2b3", "working", tx("demoSiroty")),
       prikaz("u5#b2x", "pytest -q"),
       prikaz("u5#b3x", "git log --stat"),
       prikaz("u5#b4x", "python audit.py"),
@@ -276,8 +342,8 @@ function skupina(g, plan, k) {
 
 // „1 agent", „3 agenti", „5 agentov".
 function pocetAgentov(n) {
-  if (n === 1) return "1 agent";
-  return n >= 2 && n <= 4 ? `${n} agenti` : `${n} agentov`;
+  if (n === 1) return tx("agent1");
+  return n >= 2 && n <= 4 ? tx("agenti", n) : tx("agentov", n);
 }
 
 // Nadpis zóny s počtom robotov, napríklad „Depo · 3 agenti".
@@ -285,7 +351,7 @@ function nadpisZony(z, plan, t) {
   return div().id(`nadpis-${z.id}`).absolute().left(plan.zony[z.id].x + ZONA_OKRAJ).top(NADPIS_Y)
     .transition("left", POSUN)
     .flex().gap(5).items_center().text_size(10.5)
-    .child(div().font_semibold().text_color(t.dim).child(z.nazov))
+    .child(div().font_semibold().text_color(t.dim).child(tx(z.nazov)))
     .when(plan.pocty[z.id] > 0, (el) => el.child(div().text_color(t.muted).child(`· ${pocetAgentov(plan.pocty[z.id])}`)));
 }
 
@@ -307,7 +373,7 @@ function scena(skupiny, sirka, k) {
     ...pas({ x: pasZona.x + ZONA_OKRAJ, y: PAS_Y, w: pasZona.w - 2 * ZONA_OKRAJ, podlaha: PODLAHA, ide, t, posun: POSUN }),
     ...poradie.map((g) => skupina(g, plan, k)),
     ...(skupiny.length ? [] : [div().absolute().left(0).w(plan.zony.depo.w).top(PODLAHA - 40)
-      .flex().justify_center().text_size(12).text_color(t.dim).child("žiadni agenti")]),
+      .flex().justify_center().text_size(12).text_color(t.dim).child(tx("ziadniAgenti"))]),
   ];
 }
 

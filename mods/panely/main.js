@@ -5,6 +5,23 @@ import { View, div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
 import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings } from "herdr";
 
+// Doplnok — texty tlačidiel Limity a História po anglicky a po slovensky, s rovnakými kľúčmi.
+const TEXTY = {
+  en: { limity: "Limits", historia: "History" },
+  sk: { limity: "Limity", historia: "História" },
+};
+
+// Jazyk panelov je jedna zdieľaná hodnota pre všetky mody (prepínajú ho panely Limity a História).
+// Chýbajúca alebo iná hodnota je angličtina.
+const KLUC_JAZYKA = "windows-mods.lang";
+const jazyk = () => (shared(KLUC_JAZYKA) === "sk" ? "sk" : "en");
+
+// Text v aktuálnom jazyku, číta sa pri kreslení. Funkcii odovzdá hodnoty.
+function tx(kluc, ...hodnoty) {
+  const text = TEXTY[jazyk()][kluc];
+  return typeof text === "function" ? text(...hodnoty) : text;
+}
+
 function find(node, id) {
   if (node?.id === id) return node;
   for (const child of node?.children ?? []) {
@@ -158,8 +175,8 @@ export default class Tabs extends View {
       .child(button("tab-new", "+", () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 })))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
-      .when(enabled.includes("limity"), el => el.child(panelButton("limity", "Limity", "mods/limity/limity.svg")))
-      .when(enabled.includes("historia"), el => el.child(panelButton("historia", "História", "mods/historia/historia.svg")))
+      .when(enabled.includes("limity"), el => el.child(panelButton("limity", tx("limity"), "mods/limity/limity.svg")))
+      .when(enabled.includes("historia"), el => el.child(panelButton("historia", tx("historia"), "mods/historia/historia.svg")))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/panely/win-min.svg").size(16) : "−", () => run("window.minimize")))
         .child(button("maximize", w.platform === "windows" ? svg(`mods/panely/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", () => run("window.maximize")))
         .child(button("close-window", w.platform === "windows" ? svg("mods/panely/win-close.svg").size(16) : svg("mods/pane/close.svg").size(13), () => run("window.close"))));

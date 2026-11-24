@@ -18,7 +18,7 @@
 
 import { View, div, svg, image } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { spaces, panes, focused, exec, theme, run, knownAgents, checking, props, terminals } from "herdr";
+import { spaces, panes, focused, exec, theme, run, knownAgents, checking, props, terminals, shared, setShared } from "herdr";
 
 const OBNOVA_MS = 60000;
 const OBNOVA_VSADE_MS = 300000;
@@ -26,6 +26,71 @@ const CITANIE_MS = 30000;
 // Koľko najnovších rozhovorov sa načíta (v nich sa hľadá) a koľko riadkov sa ukáže.
 const NACITAT = 500;
 const ZOBRAZIT = 40;
+
+// Texty panela po anglicky a po slovensky, s rovnakými kľúčmi. Text s hodnotami je funkcia.
+const TEXTY = {
+  en: {
+    nadpis: "History",
+    hladat: "search titles…",
+    vsade: "everywhere",
+    vsadeZapnute: "Searching all folders",
+    vsadeVypnute: "Search all folders",
+    vsetkyPriecinky: "all folders",
+    bezi: "running",
+    beziTip: "The conversation is running, opening it again would overwrite its record",
+    bezPriecinka: "folder no longer exists",
+    teraz: "now",
+    ziadnyPriecinok: "no folder",
+    inyPocitac: "history is only for folders on this computer",
+    chyba: "history could not be loaded",
+    nacitava: "loading…",
+    ziadneRozhovory: "no conversations",
+    ziadneVPriecinku: "no conversations in this folder",
+    nicSaNenaslo: "nothing found",
+    najdenych: (k, n) => `found ${k} of ${n}`,
+    zobrazenych: (k, n) => `showing ${k} of ${n}`,
+    najdenychNacitanych: (k, n) => `found ${k} of ${n} loaded`,
+    zobrazenychNacitanych: (k, n) => `showing ${k} of ${n} loaded`,
+    najnovsich: (zaklad, n, spolu) => `${zaklad} (newest ${n} of ${spolu})`,
+  },
+  sk: {
+    nadpis: "História",
+    hladat: "hľadať v názvoch…",
+    vsade: "všade",
+    vsadeZapnute: "Hľadá sa vo všetkých priečinkoch",
+    vsadeVypnute: "Hľadať vo všetkých priečinkoch",
+    vsetkyPriecinky: "všetky priečinky",
+    bezi: "beží",
+    beziTip: "Rozhovor beží, druhé otvorenie by si prepisovalo záznam",
+    bezPriecinka: "priečinok už neexistuje",
+    teraz: "teraz",
+    ziadnyPriecinok: "žiadny priečinok",
+    inyPocitac: "história je len pre priečinky na tomto počítači",
+    chyba: "históriu sa nepodarilo načítať",
+    nacitava: "načítava sa…",
+    ziadneRozhovory: "žiadne rozhovory",
+    ziadneVPriecinku: "žiadne rozhovory v tomto priečinku",
+    nicSaNenaslo: "nič sa nenašlo",
+    najdenych: (k, n) => `nájdených ${k} z ${n}`,
+    zobrazenych: (k, n) => `zobrazených ${k} z ${n}`,
+    najdenychNacitanych: (k, n) => `nájdených ${k} z ${n} načítaných`,
+    zobrazenychNacitanych: (k, n) => `zobrazených ${k} z ${n} načítaných`,
+    najnovsich: (zaklad, n, spolu) => `${zaklad} (najnovších ${n} z ${spolu})`,
+  },
+};
+
+// Jazyk panelov je jedna zdieľaná hodnota pre všetky mody. Chýbajúca alebo iná hodnota je angličtina.
+const KLUC_JAZYKA = "windows-mods.lang";
+const jazyk = () => (shared(KLUC_JAZYKA) === "sk" ? "sk" : "en");
+
+// Text v aktuálnom jazyku, číta sa pri kreslení. Funkcii odovzdá hodnoty.
+function tx(kluc, ...hodnoty) {
+  const text = TEXTY[jazyk()][kluc];
+  return typeof text === "function" ? text(...hodnoty) : text;
+}
+
+// Prepne jazyk všetkých panelov. setShared prekreslí všetky mody.
+const prepniJazyk = () => setShared(KLUC_JAZYKA, jazyk() === "sk" ? "en" : "sk");
 
 // Jeden príkaz PowerShellu (vzor CODEX_PS v limity), argumenty priečinok a $vsade. Vráti
 // {"spolu": N, "zoznam": [{id, program, nazov, zmenene, bezi}]} — najviac NACITAT
@@ -243,7 +308,7 @@ async function citajHistoriu(cwd, vsade = false) {
 // „teraz", „12 min", „3 h", „2 d" — ako zoznam rozhovorov Claude Code vo VS Code.
 function vek(zmenene) {
   const s = Math.max(0, Date.now() / 1000 - zmenene);
-  if (s < 60) return "teraz";
+  if (s < 60) return tx("teraz");
   if (s < 3600) return `${Math.floor(s / 60)} min`;
   if (s < 86400) return `${Math.floor(s / 3600)} h`;
   return `${Math.floor(s / 86400)} d`;
@@ -260,14 +325,9 @@ const maly = (text, farba) => div().text_size(11).text_color(farba).child(text);
 export default class Historia extends View {
   init(_props, cx) {
     this.programy = [];
-    // Pole hľadania. Klávesnicu nikdy neberie samo (žiadne focus()), len po kliknutí doň.
     const pociatocny = props()?.filter;
     this.filtr = typeof pociatocny === "string" ? pociatocny : "";
-    this.input = InputState.new({ placeholder: "hľadať v názvoch…", value: this.filtr });
-    this.input.on("change", (_e, cx) => { this.filtr = this.input.value(); cx.notify(); });
-    // Kým je kurzor v poli, priečinok zoznamu sa nemení — klik do panela nesmie prepnúť zoznam.
-    this.input.on("focus", () => { this.vPoli = true; });
-    this.input.on("blur", (_e, cx) => { this.vPoli = false; cx.notify(); });
+    this.vytvorPole();
     // Prepínač „všade" je pri každom načítaní vypnutý, prop `vsade` ho zapne (napr. pre snímku).
     this.vsade = props()?.vsade === true;
     this.vsadeKontext = { data: null, chyba: false, nacitava: false };
@@ -281,6 +341,18 @@ export default class Historia extends View {
     cx.spawn(async (cx) => {
       try { this.programy = await knownAgents(); cx.notify(); } catch { /* ostane záložná ikona */ }
     });
+  }
+
+  // Pole hľadania. Klávesnicu nikdy neberie samo (žiadne focus()), len po kliknutí doň.
+  // Vstavaný zástupný text sa dá dať len pri vzniku poľa a po zmene jazyka by ostal starý,
+  // preto ho kreslí pole() samo.
+  vytvorPole() {
+    this.vPoli = false;
+    this.input = InputState.new({ value: this.filtr });
+    this.input.on("change", (_e, cx) => { this.filtr = this.input.value(); cx.notify(); });
+    // Kým je kurzor v poli, priečinok zoznamu sa nemení — klik do panela nesmie prepnúť zoznam.
+    this.input.on("focus", () => { this.vPoli = true; });
+    this.input.on("blur", (_e, cx) => { this.vPoli = false; cx.notify(); });
   }
 
   // Pri zmene priečinka nový kontext (zoznam sa načíta znova, filter sa vyprázdni, okrem návratu
@@ -363,40 +435,41 @@ export default class Historia extends View {
     const tlmeny = r.bezi || bezPriecinka;
     return h_flex().id(`hist-${r.program}-${r.id}`).px(8).h(30).flex_none().rounded(8).items_center().gap(9)
       .when(!tlmeny, (el) => el.cursor_pointer().hover((s) => s.bg(t.hover)).on_click(() => this.otvor(r)))
-      .when(r.bezi, (el) => el.tooltip("Rozhovor beží, druhé otvorenie by si prepisovalo záznam"))
-      .when(bezPriecinka, (el) => el.tooltip("priečinok už neexistuje"))
+      .when(r.bezi, (el) => el.tooltip(tx("beziTip")))
+      .when(bezPriecinka, (el) => el.tooltip(tx("bezPriecinka")))
       .when(Boolean(pic), (el) => el.child(pic))
       .child(div().flex_1().min_w(0).truncate().text_color(tlmeny ? t.muted : t.foreground).child(r.nazov))
       .when(this.vsade && Boolean(r.priecinok), (el) => el.child(div().id(`hist-p-${r.program}-${r.id}`).flex_none().max_w(110).truncate()
         .text_size(11).text_color(t.dim).tooltip(r.priecinok).child(nazovPriecinka(r.priecinok))))
-      .child(div().flex_none().text_size(11).text_color(r.bezi ? t.working : t.dim).child(r.bezi ? "beží" : vek(r.zmenene)));
+      .child(div().flex_none().text_size(11).text_color(r.bezi ? t.working : t.dim).child(r.bezi ? tx("bezi") : vek(r.zmenene)));
   }
 
   // Text namiesto zoznamu: bez priečinka, iný počítač (len bežný režim), načítavanie, chyba, prázdny zoznam.
   stav() {
-    if (!this.vsade && !this.kontext?.cwd) return "žiadny priečinok";
-    if (!this.vsade && this.kontext.on) return "história je len pre priečinky na tomto počítači";
+    if (!this.vsade && !this.kontext?.cwd) return tx("ziadnyPriecinok");
+    if (!this.vsade && this.kontext.on) return tx("inyPocitac");
     const kontext = this.aktivny();
-    if (!kontext.data) return kontext.chyba ? "históriu sa nepodarilo načítať" : "načítava sa…";
+    if (!kontext.data) return kontext.chyba ? tx("chyba") : tx("nacitava");
     if (kontext.data.zoznam.length) return null;
-    return this.vsade ? "žiadne rozhovory" : "žiadne rozhovory v tomto priečinku";
+    return this.vsade ? tx("ziadneRozhovory") : tx("ziadneVPriecinku");
   }
 
   // Pätička: s filtrom počet zhôd medzi načítanými alebo „nič sa nenašlo", bez filtra koľko z koľkých.
   // V režime „všade" aj koľko rozhovorov je na disku, keď ich je viac než načítaných.
   pata(data, najdene) {
     const filter = Boolean(this.filtr.trim()), n = data.zoznam.length;
-    if (filter && !najdene.length) return "nič sa nenašlo";
+    if (filter && !najdene.length) return tx("nicSaNenaslo");
     if (!this.vsade) {
-      if (filter) return `nájdených ${najdene.length} z ${n}`;
+      if (filter) return tx("najdenych", najdene.length, n);
       const ukazanych = Math.min(ZOBRAZIT, n);
-      return data.spolu > ukazanych ? `zobrazených ${ukazanych} z ${data.spolu}` : null;
+      return data.spolu > ukazanych ? tx("zobrazenych", ukazanych, data.spolu) : null;
     }
-    const zaklad = filter ? `nájdených ${najdene.length} z ${n} načítaných` : `zobrazených ${Math.min(ZOBRAZIT, n)} z ${n} načítaných`;
-    return data.spolu > n ? `${zaklad} (najnovších ${n} z ${data.spolu})` : zaklad;
+    const zaklad = filter ? tx("najdenychNacitanych", najdene.length, n) : tx("zobrazenychNacitanych", Math.min(ZOBRAZIT, n), n);
+    return data.spolu > n ? tx("najnovsich", zaklad, n, data.spolu) : zaklad;
   }
 
-  // Pole hľadania pod hlavičkou (vzor picker) a vedľa neho prepínač „všade". Esc v poli zmaže text.
+  // Pole hľadania pod hlavičkou (vzor picker), vedľa neho prepínač „všade" a prepínač jazyka
+  // panelov (kód aktuálneho jazyka, klik prepne na druhý). Esc v poli zmaže text.
   pole(t) {
     const vsade = this.vsade;
     const pole = h_flex().id("historia-hladat").h(30).flex_1().min_w(0).px(8).gap(6).items_center().rounded(7).border_1().border_color(t.input).bg(t.background)
@@ -408,25 +481,34 @@ export default class Historia extends View {
         cx.notify();
       })
       .child(svg("mods/workspace-chrome/search.svg").size(13).flex_none().text_color(t.dim))
-      .child(Input.new(this.input).flex_1().h_full().text_size(12.5).text_color(t.foreground));
+      // Zástupný text v jazyku panela, kreslený cez prázdne pole (klik prejde na pole pod ním).
+      .child(div().flex_1().min_w(0).h_full()
+        .child(Input.new(this.input).size_full().text_size(12.5).text_color(t.foreground))
+        .when(!this.filtr, (el) => el.child(div().absolute().left(0).top(0).h_full().flex().items_center()
+          .text_size(12.5).text_color(t.muted).child(tx("hladat")))));
     const prepinac = div().id("historia-vsade").flex_none().h(24).px(8).flex().items_center().rounded(6).text_size(11).cursor_pointer()
       .border_1().border_color(vsade ? t.accent : t.input).bg(vsade ? t.accent : t.background).text_color(vsade ? t.accent_foreground : t.muted)
       .when(!vsade, (el) => el.hover((s) => s.bg(t.hover)))
-      .tooltip(vsade ? "Hľadá sa vo všetkých priečinkoch" : "Hľadať vo všetkých priečinkoch")
+      .tooltip(vsade ? tx("vsadeZapnute") : tx("vsadeVypnute"))
       .on_click((_e, cx) => this.prepniVsade(cx))
-      .child("všade");
-    return h_flex().flex_none().mx(6).mt(6).gap(6).items_center().child(pole).child(prepinac);
+      .child(tx("vsade"));
+    const jazykPanelov = div().id("historia-jazyk").flex_none().h(24).px(8).flex().items_center().rounded(6).text_size(11).cursor_pointer()
+      .border_1().border_color(t.input).bg(t.background).text_color(t.muted)
+      .hover((s) => s.bg(t.hover))
+      .on_click(() => prepniJazyk())
+      .child(jazyk().toUpperCase());
+    return h_flex().flex_none().mx(6).mt(6).gap(6).items_center().child(pole).child(prepinac).child(jazykPanelov);
   }
 
   render(cx) {
     if (!this.vsade && !this.vPoli && kluc() !== this.kontext?.kluc) this.obnov(cx);
     const t = theme(), stav = this.stav(), data = this.aktivny()?.data;
     const najdene = stav ? [] : zhody(data.zoznam, this.filtr), pata = stav ? null : this.pata(data, najdene);
-    const podnadpis = this.vsade ? "všetky priečinky" : nazovPriecinka(this.kontext?.cwd);
+    const podnadpis = this.vsade ? tx("vsetkyPriecinky") : nazovPriecinka(this.kontext?.cwd);
     return v_flex().id("historia").size_full().min_h(0).rounded(10).overflow_hidden().bg(t.background).border_1().border_color(t.border).text_color(t.foreground).text_size(13)
       .child(h_flex().h(42).flex_none().px(14).items_center().border_b(1).border_color(t.border)
         .child(v_flex().flex_1().min_w(0)
-          .child(div().font_semibold().child("História"))
+          .child(div().font_semibold().child(tx("nadpis")))
           .when(Boolean(podnadpis), (el) => el.child(maly(podnadpis, t.dim).truncate()))))
       .child(this.pole(t))
       .child(v_flex().id("historia-zoznam").flex_1().min_h(0).overflow_y_scrollbar().p(6)
