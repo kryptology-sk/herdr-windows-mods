@@ -35,7 +35,7 @@ The origin of the code and the licenses are described in [ORIGIN.md](ORIGIN.md).
 ## 2. Requirements
 
 - Windows 10 or 11 (tested on Windows 11).
-- Herdr App 0.1.17 and herdr-core 0.1.22. The mods run on these versions. The installer was tested on 0.1.16 and 0.1.21. Other versions may break something.
+- Herdr App 0.1.18 and herdr-core 0.1.22. The mods run on these versions. The installer was tested on 0.1.16 and 0.1.21. Other versions may break something.
 - Claude Code in the terminal, at least 2.1.329, runnable as `claude`. Older versions do not send records of background commands.
 - Windows PowerShell 5.1, which is part of Windows.
 - Optionally Codex CLI (`codex`) and Antigravity CLI (`agy`). Node.js (`node`) is needed by the agy status line and by the Limits panel for the hourly reading of Codex limits.

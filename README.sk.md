@@ -35,7 +35,7 @@ Pôvod kódu a licencie sú v [POVOD.md](POVOD.md).
 ## 2. Požiadavky
 
 - Windows 10 alebo 11 (vyskúšané na Windows 11).
-- Herdr App 0.1.17 a herdr-core 0.1.22. Na týchto verziách mody bežia, inštalátor bol vyskúšaný na 0.1.16 a 0.1.21. Na iných sa môže niečo rozbiť.
+- Herdr App 0.1.18 a herdr-core 0.1.22. Na týchto verziách mody bežia, inštalátor bol vyskúšaný na 0.1.16 a 0.1.21. Na iných sa môže niečo rozbiť.
 - Claude Code v termináli, aspoň 2.1.329, spustiteľný ako `claude`. Staršia verzia neposiela záznamy o príkazoch na pozadí.
 - Windows PowerShell 5.1, ktorý je súčasťou Windows.
 - Voliteľne Codex CLI (`codex`) a Antigravity CLI (`agy`). Node.js (`node`) potrebuje stavový riadok agy a panel Limity na hodinové čítanie limitov Codexu.
