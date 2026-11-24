@@ -48,4 +48,4 @@ Checklist funkcií projektu — čo je hotové a čo čaká. Bez dátumov (hist�
 - [x] `RECIPE.md` pre rozloženie `pasova-vyroba`
 - [x] `preview.png` z ukážkového okna
 - [x] priečinky podľa pravidiel galérie (jedno rozloženie v `layouts`)
-- [ ] téma repozitára `herdr-layout`
+- [x] téma repozitára `herdr-layout`
