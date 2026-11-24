@@ -1,0 +1,31 @@
+--- a/main.js
++++ b/main.js
+@@ -350,6 +350,16 @@
+     const byPriority = sort.id === "priority";
+     const urgency = new Map(list.map((a) => [a.address, Math.max(this.rank(a), ...this.tree(all, a.address).map((s) => RANK[kidStatus(s.t, this.listed)] ?? 0))]));
+     const rankOf = (a) => urgency.get(a.address);
++    // The header's totals, in sight while the list scrolls under it: the agents in each
++    // section, and what works or waits under them. That is sub-agents and background
++    // commands alike: a record doesn't say whether a command is another agent's run
++    // (`codex exec`) or a build. A pinned sub-agent with a row of its own counts as that row.
++    const totals = { 4: 0, 3: 0, 2: 0, 1: 0 };
++    for (const a of list) totals[rankOf(a) || RANK.idle] += 1;
++    const own = new Set(list.map((a) => a.address));
++    const busySubs = collapsed ? 0 : list.flatMap((a) => this.tree(all, a.address))
++      .filter(({ t: k }) => !own.has(k.address) && ["working", "blocked"].includes(kidStatus(k, this.listed))).length;
++    const total = (id, tip, mark, n) => h_flex().id(`sum-${id}`).flex_none().gap(3).items_center().text_size(11).text_color(t.muted).tooltip(tip).child(mark).child(String(n));
+     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
+     const pinned = list.filter((a) => a.pinned);
+     const rest = list.filter((a) => !a.pinned);
+@@ -544,7 +554,10 @@
+             .flex_none()
+             .items_center()
+             .justify_between()
+-            .child(div().text_size(11.5).font_medium().text_color(t.dim).child("Agents"))
++            .child(h_flex().flex_1().min_w(0).gap(7).items_center().overflow_hidden()
++              .child(div().flex_none().text_size(11.5).font_medium().text_color(t.dim).child("Agents"))
++              .children([4, 3, 2, 1].filter((r) => totals[r]).map((r) => total(r, SECTION[r], this.status(t, { status: SECTION_STATUS[r] ?? "idle" }, true), totals[r])))
++              .when(busySubs > 0, (el) => el.child(total("subs", "Sub-agents and background commands, working or waiting", div().text_color(t.dim).child("sub"), busySubs))))
+             .child(
+               div()
+                 .id("ag-sort")

@@ -18,7 +18,7 @@ Five mods in `mods\` and one layout, `pasova-vyroba`, in `layouts\`. The working
 
 | Item | What it does |
 |---|---|
-| `agents-tree` | The Agents panel as shipped, which also shows Claude Code subagents and background commands as rows under their agent, and a nested subagent under its parent. |
+| `agents-tree` | The Agents panel as shipped, which also shows Claude Code subagents and background commands as rows under their agent, and a nested subagent under its parent. The panel header shows totals — agents per status, and the subagents and background commands that are working or waiting (one number, marked `sub`). |
 | `limity` | The Limits panel shows the usage of your Claude, Codex and agy subscriptions in percent, together with the reset time. |
 | `historia` | The History panel lists past Claude Code, Codex and agy conversations for the current folder, with search in titles and an “everywhere” switch for all folders. |
 | `pas` | An assembly line for demos. Agents are robots that move through the zones Depot, Belt and Output according to their status. |
@@ -26,7 +26,7 @@ Five mods in `mods\` and one layout, `pasova-vyroba`, in `layouts\`. The working
 | `vychytavky` | Working layout. It is a copy of the shipped `main` layout that contains these mods. |
 | `pasova-vyroba` | The same layout with the assembly line above the terminals. |
 
-Besides the `vychytavky` layout, `doplnky\` contains status line scripts for Claude Code and agy, which write data for the Limits panel, and two diffs (`.diff`) to restore the `agents-tree` mod after a Herdr update.
+Besides the `vychytavky` layout, `doplnky\` contains status line scripts for Claude Code and agy, which write data for the Limits panel, and three diffs (`.diff`) to restore the `agents-tree` mod after a Herdr update.
 
 [RECIPE.md](RECIPE.md) is the recipe of the `pasova-vyroba` layout in the format of the Herdr gallery. An agent can build the same layout from it in an empty folder.
 
@@ -140,7 +140,7 @@ On Windows, agy splits the status line command only at spaces, and quotes do not
 
 ## 7. Known limitations
 
-- `agents-tree` and `panely` are copies of the shipped mods `agents` and `tabs` from Herdr App 0.1.16, and `vychytavky` is a copy of the `main` layout. They are not updated with the app. After a Herdr update they may miss new features or break. The `agents-tree` mod can be restored — rename the old one, clone the shipped one with `herdr-app do mod.clone --name agents --as agents-tree`, and in its folder apply `git apply -p4 <path>\doplnky\pr1212-mainjs.diff` and then `git apply -p1 <path>\doplnky\windows-vnorenie.diff`. If the #1212 fix has been merged into Herdr by then, the second diff is enough.
+- `agents-tree` and `panely` are copies of the shipped mods `agents` and `tabs` from Herdr App 0.1.16, and `vychytavky` is a copy of the `main` layout. They are not updated with the app. After a Herdr update they may miss new features or break. The `agents-tree` mod can be restored — rename the old one, clone the shipped one with `herdr-app do mod.clone --name agents --as agents-tree`, and in its folder apply `git apply -p4 <path>\doplnky\pr1212-mainjs.diff` then `git apply -p1 <path>\doplnky\windows-vnorenie.diff` and then `git apply -p1 <path>\doplnky\zahlavie-sucty.diff`. If the #1212 fix has been merged into Herdr by then, the second and third diffs are enough.
 - Codex history only goes back a few days. Codex packs older threads (`.jsonl.zst`, older than about 6 days) and the panel does not read them.
 - “running” is only an estimate for Codex and agy, based on whether the conversation changed in the last 2 minutes. An idle conversation open in another tab can be clicked and would open a second copy.
 - History searches only in titles, not in the content of conversations. It does not work for folders on another computer.

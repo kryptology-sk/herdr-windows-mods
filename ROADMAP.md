@@ -6,6 +6,7 @@ Checklist funkcií projektu — čo je hotové a čo čaká. Bez dátumov (hist�
 
 - [x] `agents-tree` — subagenti Claude Code a príkazy na pozadí ako riadky pod agentom
 - [x] `agents-tree` — vnorený subagent pod svojím rodičom na Windows
+- [x] `agents-tree` — súčty agentov podľa stavu a pracujúcich subagentov s príkazmi na pozadí v záhlaví panela
 - [x] `limity` — čerpanie predplatného Claude, Codexu a agy s časom obnovy
 - [x] `limity` — obnova čerpania Claude počas práce ktoréhokoľvek agenta
 - [x] `limity` — hodinové čítanie čerpania Codexu a agy bez volania modelu

@@ -8,7 +8,7 @@ Herdr App je v repozitári [herdrdev/herdr-app](https://github.com/herdrdev/herd
 
 | Kus | Z čoho | Zmeny v balíčku |
 |---|---|---|
-| `mods\agents-tree` | klon dodávaného modu `agents` z Herdr App 0.1.16 (`cloned_from` v `mod.json`) | Zmeny z otvorenej žiadosti o zlúčenie [#1212](https://github.com/herdrdev/herdr-app/pull/1212) „fix: the agents list shows what an agent runs in its own process", autor `dkremsa`. Z nej je len časť pre `defaults/mods/agents/main.js`, je v `doplnky\pr1212-mainjs.diff`. Navyše vlastný doplnok pre Windows (konštanta `META_WIN` a vetva v `loadMeta`), je v `doplnky\windows-vnorenie.diff`. |
+| `mods\agents-tree` | klon dodávaného modu `agents` z Herdr App 0.1.16 (`cloned_from` v `mod.json`) | Zmeny z otvorenej žiadosti o zlúčenie [#1212](https://github.com/herdrdev/herdr-app/pull/1212) „fix: the agents list shows what an agent runs in its own process", autor `dkremsa`. Z nej je len časť pre `defaults/mods/agents/main.js`, je v `doplnky\pr1212-mainjs.diff`. Navyše vlastný doplnok pre Windows (konštanta `META_WIN` a vetva v `loadMeta`), je v `doplnky\windows-vnorenie.diff`. A vlastné súčty v záhlaví panela (agenti podľa stavu a subagenti s príkazmi na pozadí, ktoré pracujú alebo čakajú), sú v `doplnky\zahlavie-sucty.diff`. |
 | `mods\panely` | klon dodávaného modu `tabs` z Herdr App 0.1.16 (`cloned_from` v `mod.json`), ikony `win-*.svg` sú z neho bez zmeny | Tlačidlá panelov Limits a History s textami po anglicky aj po slovensky, cesty k ikonám pod novým menom modu, názov `Panels` v `mod.json`. |
 | `doplnky\vychytavky.json` | klon dodávaného rozloženia `main` z Herdr App 0.1.16 | Panel Agents ukazuje na `agents-tree`, lišta na `panely`, v zásobníku `panel-body` pribudli bloky `limity` a `historia`. |
 | `layouts\pasova-vyroba.json` | kópia `vychytavky.json` | Pribudol blok `pas` nad terminálmi. |
@@ -26,7 +26,7 @@ Komentáre v `main.js` a `art.js` uvádzajú prevzatý postup, nie prevzatý kó
 
 ## Vlastný kód
 
-- `mods\limity`, `mods\historia`, `mods\pas` (okrem postupov vyššie), doplnok pre Windows v `mods\agents-tree` a doplnky panelov v `mods\panely`.
+- `mods\limity`, `mods\historia`, `mods\pas` (okrem postupov vyššie), doplnok pre Windows a súčty v záhlaví v `mods\agents-tree` a doplnky panelov v `mods\panely`.
 - `doplnky\statusline-limity.ps1`, `doplnky\statusline-limity-vlozka.ps1`, `doplnky\agy-statusline.mjs`.
 - `instalacia.ps1`, `README.md`, `README.sk.md`, `RECIPE.md`, tento súbor a jeho anglická verzia [ORIGIN.md](ORIGIN.md).
 

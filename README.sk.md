@@ -18,7 +18,7 @@ Päť modov v `mods\` a jedno rozloženie `pasova-vyroba` v `layouts\`. Pracovn�
 
 | Kus | Čo robí |
 |---|---|
-| `agents-tree` | Panel Agents ako dodávaný, navyše ukáže subagentov Claude Code a príkazy na pozadí ako riadky pod agentom a vnoreného subagenta pod jeho rodičom. |
+| `agents-tree` | Panel Agents ako dodávaný, navyše ukáže subagentov Claude Code a príkazy na pozadí ako riadky pod agentom a vnoreného subagenta pod jeho rodičom. V záhlaví panela sú súčty — agenti podľa stavu a jedno číslo `sub` za subagentov a príkazy na pozadí, ktoré pracujú alebo čakajú. |
 | `limity` | Panel Limity ukáže čerpanie predplatného Claude, Codexu a agy v percentách aj s časom obnovy. |
 | `historia` | Panel História so zoznamom minulých rozhovorov Claude Code, Codexu a agy pre aktuálny priečinok, s hľadaním v názvoch a prepínačom „všade" pre všetky priečinky. |
 | `pas` | Pásová výroba na predvádzanie. Agenti sú roboti, ktorí podľa stavu prechádzajú zónami Depo, Pás a Výstup. |
@@ -26,7 +26,7 @@ Päť modov v `mods\` a jedno rozloženie `pasova-vyroba` v `layouts\`. Pracovn�
 | `vychytavky` | Pracovné rozloženie. Je to kópia dodávaného `main`, v ktorej sú tieto mody. |
 | `pasova-vyroba` | To isté rozloženie s pásom nad terminálmi. |
 
-Okrem rozloženia `vychytavky` sú v `doplnky\` skripty stavového riadku pre Claude Code a agy, ktoré zapisujú údaje pre panel Limity, a dva rozdiely (`.diff`) na obnovu modu `agents-tree` po aktualizácii Herdru.
+Okrem rozloženia `vychytavky` sú v `doplnky\` skripty stavového riadku pre Claude Code a agy, ktoré zapisujú údaje pre panel Limity, a tri rozdiely (`.diff`) na obnovu modu `agents-tree` po aktualizácii Herdru.
 
 [RECIPE.md](RECIPE.md) je recept rozloženia `pasova-vyroba` vo formáte galérie Herdru, po anglicky. Podľa neho vie agent postaviť to isté rozloženie v prázdnom priečinku.
 
@@ -140,7 +140,7 @@ agy na Windows delí príkaz stavového riadku len podľa medzier a úvodzovky n
 
 ## 7. Známe obmedzenia
 
-- `agents-tree` a `panely` sú kópie dodávaných modov `agents` a `tabs` z Herdr App 0.1.16 a `vychytavky` je kópia rozloženia `main`. S aplikáciou sa neaktualizujú. Po aktualizácii Herdru im môžu chýbať novinky alebo sa rozbijú. Mod `agents-tree` sa dá obnoviť — premenuj starý, naklonuj dodávaný príkazom `herdr-app do mod.clone --name agents --as agents-tree` a v jeho priečinku aplikuj `git apply -p4 <cesta>\doplnky\pr1212-mainjs.diff` a potom `git apply -p1 <cesta>\doplnky\windows-vnorenie.diff`. Ak bude oprava #1212 v Herdri medzitým zlúčená, stačí druhý rozdiel.
+- `agents-tree` a `panely` sú kópie dodávaných modov `agents` a `tabs` z Herdr App 0.1.16 a `vychytavky` je kópia rozloženia `main`. S aplikáciou sa neaktualizujú. Po aktualizácii Herdru im môžu chýbať novinky alebo sa rozbijú. Mod `agents-tree` sa dá obnoviť — premenuj starý, naklonuj dodávaný príkazom `herdr-app do mod.clone --name agents --as agents-tree` a v jeho priečinku aplikuj `git apply -p4 <cesta>\doplnky\pr1212-mainjs.diff` potom `git apply -p1 <cesta>\doplnky\windows-vnorenie.diff` a potom `git apply -p1 <cesta>\doplnky\zahlavie-sucty.diff`. Ak bude oprava #1212 v Herdri medzitým zlúčená, stačí druhý a tretí rozdiel.
 - História Codexu siaha len pár dní dozadu. Staršie vlákna si Codex zbalí (`.jsonl.zst`, staršie než asi 6 dní) a panel ich nečíta.
 - „beží" je pri Codexe a agy len odhad podľa toho, či sa rozhovor zmenil za posledné 2 minúty. Nečinný rozhovor otvorený v inej karte sa dá kliknúť a otvoril by druhú kópiu.
 - História hľadá len v názvoch, nie v obsahu rozhovorov. Pre priečinky na inom počítači nefunguje.

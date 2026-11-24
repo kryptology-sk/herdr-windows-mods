@@ -78,7 +78,7 @@ root            row, background canvas, divider 1 border, titlebar none, traffic
 
 Own mods in `mods/`:
 
-- `agents-tree` is a clone of the shipped `agents` from Herdr App 0.1.16 with the `records` rows of Herdr App pull request #1212 and a Windows lookup of subagent parents. Prop `sortMenu` draws its own sort popup. It keeps `changed` and `pins` in `localStorage` and writes the shared values `agents.sort`, `sidebar.width` and `sidebar.collapsed`.
+- `agents-tree` is a clone of the shipped `agents` from Herdr App 0.1.16 with the `records` rows of Herdr App pull request #1212 and a Windows lookup of subagent parents. Its header shows totals of agents per status and one number, `sub`, for the subagents and background commands that are working or waiting. Prop `sortMenu` draws its own sort popup. It keeps `changed` and `pins` in `localStorage` and writes the shared values `agents.sort`, `sidebar.width` and `sidebar.collapsed`.
 - `panely` is a clone of the shipped `tabs` from 0.1.16 with the Limits and History buttons. It keeps `panels` (open panel per space) in `localStorage`, reads the shared `workspace.panels` and always adds `limity` and `historia` to the buttons it shows.
 - `limity` has no props. `historia` takes `filter` (start text of the search field) and `vsade` (true starts in everywhere mode). `pas` is `main.js` with the art in `art.js` and takes `demo` (true draws a fixed demo crew and turns clicks off).
 - `limity` and `historia` write the shared value `windows-mods.lang` (`en` or `sk`, missing means `en`), and all four read it.
